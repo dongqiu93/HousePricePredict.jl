@@ -30,10 +30,11 @@ y_eval = _y[setdiff(1:1:nrow(_train), rdn)]
 RandomForestRegressor = @load RandomForestRegressor pkg=DecisionTree
 
 grid = Dict(
-    :n_trees => 100:100:1000, 
-    :max_depth => [3,5,7], 
-    :min_samples_leaf => [2,4,8,12],
-    :min_samples_split => [2,4,8,12], 
+    :max_depth => [7,9,11,13], 
+    :min_samples_leaf => [2,4,8,12,16,20],
+    :min_samples_split => [8,12,16,20], 
+    :n_subfeatures => [0, -1],
+    :n_trees => 64:32:128, 
     :sampling_fraction => [0.1, 0.5, 0.7, 1.0]
 )
 
@@ -70,7 +71,7 @@ for cv in cvs
     top_n = Int64(round(length(collect(keys(hyper_list))) / 2; digits=0))
     _logger_list = _logger_list[1:top_n,:]
     _model_ids = unique(_logger_list.model_id)
-    hyper_list = filter(kv -> kv[1] in _model_ids, hyper_list)
+    filter!(kv -> kv[1] in _model_ids, hyper_list)
 end
 
 logger_list_df = DataFrame(logger_list)
@@ -78,6 +79,10 @@ low_rmse_df = logger_list_df[(logger_list_df.cv .== 4 .&& logger_list_df.model_i
 sort!(low_rmse_df, :rmse)
 low_rmse_df = low_rmse_df[1:10,:]
 hyper_list_selected = filter(kv -> kv[1] in low_rmse_df.model_id, hyper_list)
+
+@info hyper_list_selected
+
+# check feature importance
 
 ## train the model and make predictions using test data 
 _test = select(test, Not(["Id"]))
@@ -104,4 +109,4 @@ _out = combine(groupby(out,:Id),
     :SalePrice => mean => :SalePrice
 )
 
-CSV.write("res/rf_res_3.csv", _out)
+CSV.write("res/rf_res_2.csv", _out)
