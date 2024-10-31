@@ -1,0 +1,92 @@
+# For category features, there is a need to study those groups' distribution of their
+# features, if they present a similar distribution, then it's safe to group them into one
+- MSSubClass
+- MSZoning
+- LotShape
+- LandContour
+- Utilities
+- LotConfig
+- LandSlope 
+- Neighborhood
+- Condition1
+- Condition2
+- BldgType
+- HouseStyle
+- RoofStyle
+- RoofMatl 
+- Exterior1st
+- Exterior2nd
+- MasVnrType
+- Foundation
+- Heating
+- Electrical
+- GarageType
+- MiscFeature
+- SaleType
+- SaleCondition
+
+# Bool values (0 or 1)
+- CentralAir
+
+# As for numerical features, there is a need to transform them from absolute value
+# to the normalization range of -1 and 1; also there is a need to create new features
+# based on their type, eg. 
+# MasVnrArea_by_MasVnrType can be calculated = MasVnrArea / mean(MasVnrArea) group by MasVnrType
+
+- Street
+- Alley
+
+- LotFrontage
+- LotArea
+- OverallQual
+- OverallCond
+- MasVnrArea
+- ExterQual
+- ExterCond
+- BsmtQual
+- BsmtCond
+- BsmtExposure
+- BsmtFinType1
+- BsmtFinSF1
+- BsmtFinType2
+- BsmtFinSF2
+- BsmtUnfSF
+- TotalBsmtSF
+- HeatingQC
+- 1stFlrSF
+- 2ndFlrSF
+- LowQualFinSF
+- GrLivArea
+- BsmtFullBath
+- BsmtHalfBath
+- FullBath
+- HalfBath
+- BedroomAbvGr
+- KitchenAbvGr
+- KitchenQual
+- TotRmsAbvGrd
+- Functional
+- Fireplaces
+- FireplaceQu
+- GarageFinish 
+- GarageCars
+- GarageArea
+- GarageQual
+- GarageCond
+- PavedDrive
+- WoodDeckSF
+- OpenPorchSF
+- EnclosedPorch
+- 3SsnPorch
+- ScreenPorch
+- PoolArea
+- PoolQC
+- Fence
+- MiscVal
+
+# For date data, it has to be transformed into numerical (since, or until) and divided by a mid number 
+- YearBuilt
+- YearRemodAdd
+- GarageYrBlt
+- MoSold
+- YrSold

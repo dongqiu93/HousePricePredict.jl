@@ -1,0 +1,15 @@
+name = "HousePricesPredict"
+uuid = "f995db8b-62aa-4c59-98d8-fe2d978e5348"
+authors = ["qwinter93 <dong.qiu1993@outlook.com>"]
+version = "0.1.0"
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
+MLJXGBoostInterface = "54119dfa-1dab-4055-a167-80440f4f7a91"
+PlotlyLight = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
