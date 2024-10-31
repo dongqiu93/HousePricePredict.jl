@@ -80,7 +80,7 @@ sort!(low_rmse_df, :rmse)
 low_rmse_df = low_rmse_df[1:10,:]
 hyper_list_selected = filter(kv -> kv[1] in low_rmse_df.model_id, hyper_list)
 
-@info hyper_list_selected
+@info DatFrame(hyper_list_selected)
 
 # check feature importance
 
