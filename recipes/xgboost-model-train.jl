@@ -6,6 +6,9 @@ using StatsBase
 
 train = DataFrame(CSV.File("assets/train_cleaned.csv"))
 test = DataFrame(CSV.File("assets/test_cleaned.csv"))
+mutual_vars = intersect(names(train),names(test))
+train = select(train, [mutual_vars; "_target"])
+test = select(test, mutual_vars)
 
 # searching for a model that matches the datatypes
 _train = select(train, Not(["Id","_target"]))
@@ -89,8 +92,8 @@ out = DataFrame()
 for key in collect(keys(hyper_list_selected))
     @info key
     hyper = hyper_list[key]
-    bst = XGBoostRegressor(; num_round=hyper[:num_round], max_depth=hyper[:max_depth])
-    mach = machine(bst, _train, y)
+    bst = XGBoostRegressor(; hyper...)
+    mach = machine(bst, _train, _y)
     fit!(mach, verbosity=2)
     pred = MLJ.predict(mach, _X_test)
     _pred = exp.(pred)
@@ -107,4 +110,4 @@ _out = combine(groupby(out,:Id),
     :SalePrice => mean => :SalePrice
 )
 
-CSV.write("res/res_2.csv", _out)
+CSV.write("res/xgboost_res_3.csv", _out)

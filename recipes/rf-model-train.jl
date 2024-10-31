@@ -4,12 +4,11 @@ using MLJ
 using Random 
 using StatsBase 
 
-train = DataFrame(
-    CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\train_cleaned.csv"),
-);
-test = DataFrame(
-    CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\test_cleaned.csv"),
-);
+train = DataFrame(CSV.File("assets/train_cleaned.csv"))
+test = DataFrame(CSV.File("assets/test_cleaned.csv"))
+mutual_vars = intersect(names(train),names(test))
+train = select(train, [mutual_vars; "_target"])
+test = select(test, mutual_vars)
 
 # searching for a model that matches the datatypes
 _train = select(train, Not(["Id","_target"]))
@@ -23,20 +22,19 @@ y_train = _y[rdn]
 X_eval = _train[setdiff(1:1:nrow(_train), rdn),:]
 y_eval = _y[setdiff(1:1:nrow(_train), rdn)]
 
-task(model) = matching(model, X, y)
-models(task)
+# task(model) = matching(model, X, y)
+# models(task)
 
 # XGBoostRegressor is suggested 
 # create and train a gradient boosted tree model of 5 trees
-RFRegressor @load RandomForestRegressor pkg=ScikitLearn
+RandomForestRegressor = @load RandomForestRegressor pkg=DecisionTree
 
 grid = Dict(
-    n_estimators= 100:100:1000, 
-    max_depth= [3,5,7], 
-    min_samples_split= [2,4,8,12], 
-    bootstrap=True, 
-    warm_start=[true,false], 
-    ccp_alpha=[0.0, 0.001, 0.01, 0.1],
+    :n_trees => 100:100:1000, 
+    :max_depth => [3,5,7], 
+    :min_samples_leaf => [2,4,8,12],
+    :min_samples_split => [2,4,8,12], 
+    :sampling_fraction => [0.1, 0.5, 0.7, 1.0]
 )
 
 Random.seed!(123)
@@ -55,9 +53,9 @@ for cv in cvs
     for key in collect(keys(hyper_list))
         @info key
         hyper = hyper_list[key]
-        bst = RFRegressor(; hyper...)
+        bst = RandomForestRegressor(; hyper...)
         mach = machine(bst, X_train, y_train)
-        fit!(mach, verbosity=2)
+        MLJ.fit!(mach, verbosity=2)
         pred = MLJ.predict(mach, X_eval);
         rmse = rms(pred, y_eval)
         logger = Dict(
@@ -76,20 +74,22 @@ for cv in cvs
 end
 
 logger_list_df = DataFrame(logger_list)
-
-hyper_list_selected = hyper_list
+low_rmse_df = logger_list_df[(logger_list_df.cv .== 4 .&& logger_list_df.model_id .∈ Ref(collect(keys(hyper_list)))),:]
+sort!(low_rmse_df, :rmse)
+low_rmse_df = low_rmse_df[1:10,:]
+hyper_list_selected = filter(kv -> kv[1] in low_rmse_df.model_id, hyper_list)
 
 ## train the model and make predictions using test data 
-_X_test = select(test, Not(["Id"]))
+_test = select(test, Not(["Id"]))
 
 out = DataFrame()
 for key in collect(keys(hyper_list_selected))
     @info key
-    hyper = hyper_list[key]
-    bst = XGBoostRegressor(; num_round=hyper[:num_round], max_depth=hyper[:max_depth])
-    mach = machine(bst, _train, y)
-    fit!(mach, verbosity=2)
-    pred = MLJ.predict(mach, _X_test)
+    hyper = hyper_list_selected[key]
+    bst = RandomForestRegressor(; hyper...)
+    mach = machine(bst, _train, _y)
+    MLJ.fit!(mach, verbosity=2)
+    pred = MLJ.predict(mach, _test)
     _pred = exp.(pred)
     out_iter = DataFrame(
         :model_id => key,
@@ -104,4 +104,4 @@ _out = combine(groupby(out,:Id),
     :SalePrice => mean => :SalePrice
 )
 
-CSV.write("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\res\\res_2.csv", _out)
+CSV.write("res/rf_res_3.csv", _out)
