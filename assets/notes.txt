@@ -90,3 +90,9 @@
 - GarageYrBlt
 - MoSold
 - YrSold
+
+#
+There might be a need to: 
+1. Feature engineering
+2. Other models 
+3. Model Tuning 
