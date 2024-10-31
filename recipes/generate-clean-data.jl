@@ -17,9 +17,7 @@ import HousePricesPredict:
     paved_drive_score,
     fence_quality
 
-train = DataFrame(
-    CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\train.csv"),
-);
+train = DataFrame(CSV.File("assets\\train.csv"))
 
 cat_vars = [
     :MSSubClass,
@@ -254,8 +252,7 @@ transform!(train_cleaned,
 print(typeof.(eachcol(train_cleaned)))
 
 ### save 
-CSV.write("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\train_cleaned.csv", train_cleaned)
-
+CSV.write("assets/train_cleaned.csv", train_cleaned)
 
 ##################################################################################################################
 ##################################################################################################################
@@ -516,4 +513,4 @@ transform!(test_cleaned,
 print(typeof.(eachcol(test_cleaned)))
 
 ### save 
-CSV.write("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\test_cleaned.csv", test_cleaned)
+CSV.write("assets/test_cleaned.csv", test_cleaned)

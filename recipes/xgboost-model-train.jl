@@ -3,18 +3,14 @@ using DataFrames
 using MLJ 
 using Random 
 
-train = DataFrame(
-    CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\train_cleaned.csv"),
-);
-test = DataFrame(
-    CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\test_cleaned.csv"),
-);
+train = DataFrame(CSV.File("assets/train_cleaned.csv"))
+test = DataFrame(CSV.File("assets/test_cleaned.csv"))
 
 # searching for a model that matches the datatypes
 _train = select(train, Not(["Id","_target"]))
 _y = train."_target"
 
-rdn = sample(1:1:nrow(_train), 1000; replace=false)
+rdn = sample(1:1:nrow(_train), 1200; replace=false)
 
 X_train = _train[rdn,:]
 y_train = _y[rdn]
@@ -79,12 +75,11 @@ for cv in cvs
     hyper_list = filter(kv -> kv[1] in _model_ids, hyper_list)
 end
 
+# select final hypers 
 logger_list_df = DataFrame(logger_list)
-
 low_rmse_df = logger_list_df[(logger_list_df.cv .== 4 .&& logger_list_df.model_id .∈ Ref(collect(keys(hyper_list)))),:]
 sort!(low_rmse_df, :rmse)
 low_rmse_df = low_rmse_df[1:10,:]
-
 hyper_list_selected = filter(kv -> kv[1] in low_rmse_df.model_id, hyper_list)
 
 ## train the model and make predictions using test data 
@@ -112,4 +107,4 @@ _out = combine(groupby(out,:Id),
     :SalePrice => mean => :SalePrice
 )
 
-CSV.write("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\res\\res_2.csv", _out)
+CSV.write("res/res_2.csv", _out)
