@@ -2,6 +2,7 @@ using CSV
 using DataFrames
 using MLJ 
 using Random 
+using StatsBase 
 
 train = DataFrame(
     CSV.File("C:\\Users\\Dong\\Project\\HousePricesPredict.jl\\assets\\train_cleaned.csv"),

@@ -2,6 +2,7 @@ using CSV
 using DataFrames
 using MLJ 
 using Random 
+using StatsBase 
 
 train = DataFrame(CSV.File("assets/train_cleaned.csv"))
 test = DataFrame(CSV.File("assets/test_cleaned.csv"))
