@@ -32,10 +32,9 @@ grid_xgboost = Dict(
     :max_depth => 2:2:12,
     :lambda => [0, 0.01, 0.1, 1, 10],
     :gamma => [0, 0.0005, 0.001, 0.002, 0.01],
-    :alpha => [0, 0.01, 0.1, 1, 10]
+    :alpha => [0, 0.01, 0.1, 1, 10],
     :early_stopping_rounds => [0, 100],
     :subsample => [0.25, 0.5, 0.75, 1],
-    :sampling_method => [:uniform, :gradient_based],
     :max_bin => [64, 128, 256],
     :seed => [123],
 )
@@ -73,7 +72,7 @@ for cv in cvs
     top_n = Int64(round(length(collect(keys(hyper_list))) / 2; digits=0))
     _logger_list = _logger_list[1:top_n,:]
     _model_ids = unique(_logger_list.model_id)
-    hyper_list = filter(kv -> kv[1] in _model_ids, hyper_list)
+    filter!(kv -> kv[1] in _model_ids, hyper_list)
 end
 
 # select final hypers 
