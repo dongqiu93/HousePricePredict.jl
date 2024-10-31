@@ -19,8 +19,8 @@ y_train = _y[rdn]
 X_eval = _train[setdiff(1:1:nrow(_train), rdn),:]
 y_eval = _y[setdiff(1:1:nrow(_train), rdn)]
 
-task(model) = matching(model, X, y)
-models(task)
+# task(model) = matching(model, X, y)
+# models(task)
 
 # XGBoostRegressor is suggested 
 # create and train a gradient boosted tree model of 5 trees
