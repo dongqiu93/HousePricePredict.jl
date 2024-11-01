@@ -3,6 +3,10 @@ using DataFrames
 using MLJ 
 using Random 
 using StatsBase 
+using HousePricesPredict
+
+import HousePricesPredict:
+    skipnan
 
 train = DataFrame(CSV.File("assets/train_cleaned.csv"))
 test = DataFrame(CSV.File("assets/test_cleaned.csv"))
@@ -14,14 +18,6 @@ test = select(test, mutual_vars)
 _train = select(train, Not(["Id","_target"]))
 _y = train."_target"
 
-rdn = sample(1:1:nrow(_train), 1000; replace=false)
-
-X_train = _train[rdn,:]
-y_train = _y[rdn]
-
-X_eval = _train[setdiff(1:1:nrow(_train), rdn),:]
-y_eval = _y[setdiff(1:1:nrow(_train), rdn)]
-
 # task(model) = matching(model, X, y)
 # models(task)
 
@@ -30,12 +26,12 @@ y_eval = _y[setdiff(1:1:nrow(_train), rdn)]
 RandomForestRegressor = @load RandomForestRegressor pkg=DecisionTree
 
 grid = Dict(
-    :max_depth => [7,9,11,13], 
-    :min_samples_leaf => [2,4,8,12,16,20],
-    :min_samples_split => [8,12,16,20], 
-    :n_subfeatures => [0, -1],
-    :n_trees => 64:32:128, 
-    :sampling_fraction => [0.1, 0.5, 0.7, 1.0]
+    :max_depth => [8,16,32,64,128], 
+    :min_samples_leaf => [1,2,4,8],
+    :min_samples_split => [12,16,20,24,28,32], 
+    :n_subfeatures => [0],
+    :n_trees => 64:32:128,
+    :sampling_fraction => [0.7,0.8,0.9,1.0]
 )
 
 Random.seed!(123)
@@ -49,8 +45,26 @@ for i in 1:256
 end 
 
 cvs = collect(1:4)
+_rows = collect(1:nrow(_train))
+cutoff_lists = []
+for cv in cvs 
+    @info cv
+    cutoff = sample(_rows, Int64(round(nrow(_train) / 4; digits=0)), replace=false)
+    setdiff!(_rows, cutoff)
+    push!(cutoff_lists, cutoff)
+end
+
 logger_list = DataFrame()
 for cv in cvs
+    # clip the data into 4 pieces 
+    rdn = cutoff_lists[cv]
+
+    X_train = _train[setdiff(1:1:nrow(_train), rdn),:]
+    y_train = _y[setdiff(1:1:nrow(_train), rdn)]
+
+    X_eval = _train[rdn,:]
+    y_eval = _y[rdn]
+
     for key in collect(keys(hyper_list))
         @info key
         hyper = hyper_list[key]
@@ -80,7 +94,7 @@ sort!(low_rmse_df, :rmse)
 low_rmse_df = low_rmse_df[1:10,:]
 hyper_list_selected = filter(kv -> kv[1] in low_rmse_df.model_id, hyper_list)
 
-@info DatFrame(hyper_list_selected)
+@info DataFrame([value for (key,value) in hyper_list_selected])
 
 # check feature importance
 
@@ -106,7 +120,8 @@ end
 
 # aggregate the results 
 _out = combine(groupby(out,:Id),
-    :SalePrice => mean => :SalePrice
+    :SalePrice => (x->mean(skipnan(Float64.(x)))) => :SalePrice
 )
 
-CSV.write("res/rf_res_2.csv", _out)
+CSV.write("res/rf_res_3.csv", _out)
+CSV.write("res/rf_hyper_selected.csv", DataFrame([value for (key,value) in hyper_list_selected]))
