@@ -17,7 +17,8 @@ import HousePricesPredict:
     paved_drive_score,
     fence_quality
 
-train = DataFrame(CSV.File("assets\\train.csv"))
+train = DataFrame(CSV.File("assets/train.csv"))
+train = DataFrame(CSV.File("assets/test.csv"))
 
 cat_vars = [
     :MSSubClass,
@@ -185,6 +186,7 @@ train.DE_Rate_Fence = fence_quality.(train.Fence);
 ## feature engineering 
 ### cat features
 for cat in cat_vars
+    @info cat
     vars = unique(train[!, cat]) 
     one_hot_encoded = DataFrame(transpose(vars.== permutedims(train.MSSubClass)), :auto)
     rename!(one_hot_encoded, "DE_CAT_" .* string(cat) .* "_" .*  vars)
@@ -222,18 +224,30 @@ transform!(train,
 
 # feature engineering 
 ## by building type
-train.DE_Size_LotArea_per_building = train.LotArea ./ train.BldgType
+dfg = groupby(train, :BldgType)
+df = transform!(dfg, :LotArea => (x-> x .- mean(skipnan(Float64.(x)))) => "DE_Size_LotArea_per_building")
+
+grLive_area = ["1stFlrSF",
+    "2ndFlrSF"]
+grLive_area_pairs = [[x, "GrLivArea"] for x in grLive_area]
+grLive_area_out = "DE_Rate_" .* grLive_area
+
+transform!(train, grLive_area_pairs .=> 
+    ((x,y)->clamp.(x ./ y, 0,1)) .=> 
+        grLive_area_out)
+
+train.DE_Rate_LowQualFinSF = train.LowQualFinSF ./ (train.GrLivArea .+ train.TotalBsmtSF)
 
 ## by MasVnrType
 dfg = groupby(train, :MasVnrType)
-df = transform!(dfg, :MasVnrArea => (x-> x .- mean(skipnan(x))) => "DE_Size_MasVnrArea_per_type")
+df = transform!(dfg, :MasVnrArea => (x-> x .- mean(skipnan(Float64.(x)))) => "DE_Size_MasVnrArea_per_type")
 
 ## by basement type
 bsmt_area = [:BsmtFinSF1,
     :BsmtFinSF2,
     :BsmtUnfSF]
 bsmt_area_pairs = [[x, :TotalBsmtSF] for x in bsmt_area]
-bsmt_area_out = "DE_Rate_" .* bsmt_area
+bsmt_area_out = "DE_Rate_" .* string.(bsmt_area)
 
 transform!(train, bsmt_area_pairs .=> 
     ((x,y)->clamp.(x ./ y, 0,1)) .=> 
@@ -241,7 +255,7 @@ transform!(train, bsmt_area_pairs .=>
 
 dfg = groupby(train, :BldgType)
 df = transform(dfg,
-    bsmt_area_out .=> (x-> x .- mean(skipnan(x))) .=> bsmt_area_out .* "_bldgtype"
+    bsmt_area_out .=> (x-> x .- mean(skipnan(Float64.(x)))) .=> bsmt_area_out .* "_bldgtype"
 )
 
 ## # of rooms should be keept as between [0,1]
@@ -254,7 +268,7 @@ train.DE_Rate_halfbathabvgr = clamp.(train.HalfBath ./ train.TotRmsAbvGrd, 0, 1)
 train.DE_Rate_kitchenabvgr = clamp.(train.KitchenAbvGr ./ train.TotRmsAbvGrd, 0, 1)
 
 transform!(train,
-    rms .=> identity .=> "DE_Count_" .* rms
+    rms .=> identity .=> "DE_Count_" .* string.(rms)
 )
 
 ### transform time to numerical 
@@ -273,6 +287,12 @@ train._target = log.(train.SalePrice)
 out_vars = names(train)[occursin.("DE_",names(train))]
 
 train_cleaned = select(train, ["Id"; out_vars; "_target"])
+#test_cleaned = select(train, ["Id"; out_vars])
+# transform!(test_cleaned,
+#     out_vars .=> (x->Float64.(x)) .=> out_vars,
+#     :Id => (x->string.(x)) => :Id
+# )
+
 transform!(train_cleaned,
     out_vars .=> (x->Float64.(x)) .=> out_vars,
     :Id => (x->string.(x)) => :Id
@@ -282,3 +302,4 @@ print(typeof.(eachcol(train_cleaned)))
 
 ### save 
 CSV.write("assets/train_cleaned.csv", train_cleaned)
+CSV.write("assets/test_cleaned.csv", test_cleaned)
